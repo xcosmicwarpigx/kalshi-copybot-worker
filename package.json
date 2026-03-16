@@ -7,13 +7,14 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "build": "tsc -p tsconfig.json",
-    "docker:start": "node dist/docker-runner.js",
+    "docker:start": "tsx src/docker-runner.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260311.0",
     "@types/node": "^22.13.14",
+    "tsx": "^4.19.2",
     "typescript": "^5.8.2",
     "vitest": "^3.1.1",
     "wrangler": "^4.9.0"
