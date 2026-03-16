@@ -4,9 +4,11 @@
     "module": "ES2022",
     "moduleResolution": "Bundler",
     "strict": true,
-    "types": ["@cloudflare/workers-types", "vitest/globals"],
+    "types": ["@cloudflare/workers-types", "vitest/globals", "node"],
     "skipLibCheck": true,
-    "lib": ["ES2022", "WebWorker"]
+    "lib": ["ES2022", "WebWorker"],
+    "outDir": "dist",
+    "rootDir": "."
   },
   "include": ["src", "test"]
 }

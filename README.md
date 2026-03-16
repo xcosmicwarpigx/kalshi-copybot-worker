@@ -1,69 +1,79 @@
-# Kalshi Copy Bot (Cloudflare Worker)
+# Kalshi Weather Bot (Worker + Docker)
 
-Cron-driven Cloudflare Worker that:
-1. Pulls a feed of leader stats + live signals
-2. Filters leaders by win rate/trade count
-3. Sizes trades with capped fractional Kelly
-4. Places orders on Kalshi (or dry-run mode)
+This project now focuses on **weather markets** (not copy trading).
 
-## Important
-- This repo does **not** guarantee profitability.
-- Past performance is not predictive of future returns.
-- You must verify Kalshi API auth/signing requirements for your account tier.
+It computes a fair probability from weather data, compares that to market-implied probability, and only places a trade when edge exceeds a threshold.
+
+## Strategy (simple + testable)
+1. Pull weather forecasts from Open-Meteo.
+2. Estimate probability of event (e.g. temp above threshold).
+3. Read Kalshi market quote.
+4. Take bet only when `fairProb - marketProb >= MIN_EDGE_PCT`.
+5. Size with capped fractional Kelly.
+
+## Runtimes
+- **Cloudflare Worker** (cron): default runtime.
+- **Docker container**: same core strategy, longer/heavier execution if needed.
 
 ## Environment variables
-Set these in Cloudflare Worker secrets/vars:
-
+Required:
 - `KALSHI_API_KEY`
 - `KALSHI_API_SECRET`
-- `BANKROLL_USD` (e.g. `1000`)
-- `LEADERBOARD_URL` (JSON endpoint with leaders/signals)
-- `KALSHI_API_BASE` (optional, default: `https://api.elections.kalshi.com/trade-api/v2`)
-- `KALSHI_TRADING_ENABLED` (`true` to place orders, otherwise paper mode)
-- `MIN_LEADER_WIN_RATE` (default `0.9`)
-- `MIN_LEADER_TRADES` (default `50`)
+- `BANKROLL_USD`
+- `WEATHER_LOCATIONS_JSON`
+
+Optional:
+- `KALSHI_API_BASE` (default `https://api.elections.kalshi.com/trade-api/v2`)
+- `OPEN_METEO_API_BASE` (default `https://api.open-meteo.com`)
+- `KALSHI_TRADING_ENABLED` (`true` for live orders; otherwise paper mode)
 - `MAX_TRADE_RISK_PCT` (default `0.02`)
+- `MIN_EDGE_PCT` (default `0.05`)
+- `CRON_INTERVAL_MS` (Docker only, default `300000`)
 
-## Provider payload format
-`LEADERBOARD_URL` must return JSON:
-
+## `WEATHER_LOCATIONS_JSON` format
 ```json
-{
-  "leaders": [
-    {"username":"alice","winRate":0.92,"trades":140}
-  ],
-  "signals": [
-    {
-      "username":"alice",
-      "marketTicker":"KXTEST-2026",
-      "side":"yes",
-      "confidence":0.74,
-      "timestamp":"2026-03-16T06:00:00Z"
-    }
-  ]
-}
+[
+  {
+    "id": "den",
+    "name": "Denver",
+    "latitude": 39.7392,
+    "longitude": -104.9903,
+    "ticker": "KXWEATHER-DEN-EXAMPLE",
+    "side": "yes",
+    "thresholdF": 70,
+    "resolveHourUtc": 0
+  }
+]
 ```
 
-## Dev
+## Local dev
 ```bash
 npm install
 npm test
 npm run dev
 ```
 
-## Deploy
+## Worker deploy
 ```bash
 npx wrangler secret put KALSHI_API_KEY
 npx wrangler secret put KALSHI_API_SECRET
 npx wrangler deploy
 ```
 
-## Candidate public accounts to manually verify
-From recent public Ideas feed activity (not performance-verified):
-- `delito`
-- `WorkHardPlayHard`
-- `broad.bride`
-- `bigmash`
-- `cyruy`
+## Docker runtime
+```bash
+npm run build
+docker build -t kalshi-weather-bot -f docker/Dockerfile .
+docker run --env-file .env kalshi-weather-bot
+```
 
-See `research/candidates.md` for details.
+## Tests
+Covers:
+- risk sizing
+- weather probability math + weather fetch parsing
+- market edge/order planning
+- Kalshi client quote/order behavior
+- end-to-end run cycle orchestration
+
+## Risk warning
+This is trading software. It can lose money. Keep live mode off until paper results are acceptable.
