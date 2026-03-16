@@ -1,8 +1,9 @@
 export interface Env {
   KALSHI_API_BASE?: string;
-  KALSHI_API_KEY: string;
-  KALSHI_API_SECRET: string;
+  KALSHI_API_KEY?: string;
+  KALSHI_API_SECRET?: string;
   KALSHI_TRADING_ENABLED?: string;
+  WEATHER_ONLY_MODE?: string;
   BANKROLL_USD: string;
   MAX_TRADE_RISK_PCT?: string;
   MIN_EDGE_PCT?: string;
@@ -15,8 +16,8 @@ export interface WeatherLocation {
   name: string;
   latitude: number;
   longitude: number;
-  // Kalshi binary market ticker for this question.
-  ticker: string;
+  // Kalshi binary market ticker for this question (optional in weather-only mode).
+  ticker?: string;
   // Side represented by the threshold question.
   side: "yes" | "no";
   thresholdF: number;

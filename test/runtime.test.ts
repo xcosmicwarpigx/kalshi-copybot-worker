@@ -40,6 +40,41 @@ describe("runCycle", () => {
     expect(kalshiClient.placeOrder).toHaveBeenCalledTimes(1);
   });
 
+  it("runs in weather-only mode without kalshi credentials", async () => {
+    const kalshiClient = {
+      getQuote: vi.fn(async () => ({ ticker: "KX-W", yesPrice: 0.55, noPrice: 0.45 })),
+      placeOrder: vi.fn(async () => undefined),
+    } as any;
+
+    const weatherFetcher = vi.fn(async () => ({
+      locationId: "den",
+      pYes: 0.56,
+      modelSpreadF: 12,
+      observedTempF: 70,
+    }));
+
+    const env = {
+      BANKROLL_USD: "1000",
+      WEATHER_ONLY_MODE: "true",
+      WEATHER_LOCATIONS_JSON: JSON.stringify([
+        {
+          id: "den",
+          name: "Denver",
+          latitude: 39.7,
+          longitude: -104.9,
+          side: "yes",
+          thresholdF: 70,
+          resolveHourUtc: 0,
+        },
+      ]),
+    } as any;
+
+    const result = await runCycle(env, { kalshiClient, weatherFetcher });
+    expect(result.placed).toBe(0);
+    expect(result.skipped).toBe(1);
+    expect(kalshiClient.getQuote).not.toHaveBeenCalled();
+  });
+
   it("skips when no edge", async () => {
     const kalshiClient = {
       getQuote: vi.fn(async () => ({ ticker: "KX-W", yesPrice: 0.55, noPrice: 0.45 })),

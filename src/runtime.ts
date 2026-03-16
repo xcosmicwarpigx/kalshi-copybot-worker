@@ -25,12 +25,13 @@ export async function runCycle(
   const locations = JSON.parse(env.WEATHER_LOCATIONS_JSON) as WeatherLocation[];
   const weatherBase = env.OPEN_METEO_API_BASE ?? "https://api.open-meteo.com";
 
+  const weatherOnly = env.WEATHER_ONLY_MODE === "true";
   const client =
     deps.kalshiClient ??
     new KalshiClient(
       env.KALSHI_API_BASE ?? "https://api.elections.kalshi.com/trade-api/v2",
-      env.KALSHI_API_KEY,
-      env.KALSHI_API_SECRET,
+      env.KALSHI_API_KEY ?? "",
+      env.KALSHI_API_SECRET ?? "",
     );
   const weatherFetcher = deps.weatherFetcher ?? fetchWeatherSignal;
 
@@ -39,6 +40,15 @@ export async function runCycle(
 
   for (const loc of locations) {
     const signal = await weatherFetcher(loc, weatherBase);
+
+    if (weatherOnly || !loc.ticker) {
+      console.log(
+        `[weather-only] ${loc.name} pYes=${signal.pYes.toFixed(3)} spreadF=${signal.modelSpreadF.toFixed(1)} observedF=${signal.observedTempF.toFixed(1)}`,
+      );
+      skipped++;
+      continue;
+    }
+
     const quote = await client.getQuote(loc.ticker);
     const order = buildWeatherOrder(loc, signal, quote, cfg);
 

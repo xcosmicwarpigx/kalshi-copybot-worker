@@ -67,6 +67,12 @@ docker build -t kalshi-weather-bot -f docker/Dockerfile .
 docker run --env-file .env kalshi-weather-bot
 ```
 
+### Recommended rollout
+1. `WEATHER_ONLY_MODE=true` for 2-7 days to collect signal behavior.
+2. Add real Kalshi weather tickers to each location.
+3. Switch `WEATHER_ONLY_MODE=false` and keep `KALSHI_TRADING_ENABLED=false` for paper trading.
+4. Only after review, set `KALSHI_TRADING_ENABLED=true`.
+
 ## Tests
 Covers:
 - risk sizing

@@ -2,10 +2,18 @@ import { runCycle } from "./runtime";
 import type { Env } from "./types";
 
 function readEnv(): Env {
-  const required = ["KALSHI_API_KEY", "KALSHI_API_SECRET", "BANKROLL_USD", "WEATHER_LOCATIONS_JSON"];
+  const required = ["BANKROLL_USD", "WEATHER_LOCATIONS_JSON"];
   for (const key of required) {
     if (!process.env[key]) {
       throw new Error(`Missing required env var: ${key}`);
+    }
+  }
+
+  if (process.env.WEATHER_ONLY_MODE !== "true") {
+    for (const key of ["KALSHI_API_KEY", "KALSHI_API_SECRET"]) {
+      if (!process.env[key]) {
+        throw new Error(`Missing required env var for trading mode: ${key}`);
+      }
     }
   }
 
